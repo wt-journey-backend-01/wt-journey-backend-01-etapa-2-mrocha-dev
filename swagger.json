@@ -1,0 +1,288 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Policial",
+    "version": "1.0.0",
+    "description": "API para gerenciamento de agentes e casos policiais"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor local"
+    }
+  ],
+  "paths": {
+    "/agentes": {
+      "get": {
+        "summary": "Listar todos os agentes",
+        "responses": {
+          "200": {
+            "description": "Lista de agentes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Agente" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar novo agente",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AgenteInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agente criado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Agente" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agentes/{id}": {
+      "get": {
+        "summary": "Obter agente por ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agente encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Agente" }
+              }
+            }
+          },
+          "404": {
+            "description": "Agente não encontrado"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar agente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AgenteInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agente atualizado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Agente" }
+              }
+            }
+          },
+          "404": {
+            "description": "Agente não encontrado"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar agente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agente removido com sucesso"
+          },
+          "404": {
+            "description": "Agente não encontrado"
+          }
+        }
+      }
+    },
+    "/casos": {
+      "get": {
+        "summary": "Listar todos os casos",
+        "responses": {
+          "200": {
+            "description": "Lista de casos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Caso" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar novo caso",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CasoInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Caso criado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Caso" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/casos/{id}": {
+      "get": {
+        "summary": "Obter caso por ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Caso encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Caso" }
+              }
+            }
+          },
+          "404": {
+            "description": "Caso não encontrado"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar caso",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CasoInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Caso atualizado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Caso" }
+              }
+            }
+          },
+          "404": {
+            "description": "Caso não encontrado"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar caso",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Caso removido com sucesso"
+          },
+          "404": {
+            "description": "Caso não encontrado"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Agente": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "nome": { "type": "string", "example": "Mishel Rocha" },
+          "cargo": { "type": "string", "example": "Delegado" },
+          "disponivel": { "type": "boolean", "example": true }
+        }
+      },
+      "AgenteInput": {
+        "type": "object",
+        "required": ["nome", "cargo", "disponivel"],
+        "properties": {
+          "nome": { "type": "string" },
+          "cargo": { "type": "string" },
+          "disponivel": { "type": "boolean" }
+        }
+      },
+      "Caso": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "titulo": { "type": "string", "example": "Roubo à mão armada" },
+          "descricao": { "type": "string", "example": "Assalto a banco no centro da cidade" },
+          "status": { "type": "string", "example": "Em investigação" }
+        }
+      },
+      "CasoInput": {
+        "type": "object",
+        "required": ["titulo", "descricao", "status"],
+        "properties": {
+          "titulo": { "type": "string" },
+          "descricao": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      }
+    }
+  }
+}
