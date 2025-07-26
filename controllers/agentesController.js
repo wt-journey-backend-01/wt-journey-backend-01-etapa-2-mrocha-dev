@@ -1,45 +1,114 @@
-let agentes = [];
-let idCounter = 1;
+const { v4: uuidv4 } = require('uuid');
+const agentesRepository = require('../repositories/agentesRepository');
 
-exports.listarAgentes = (req, res) => {
-  res.json(agentes);
-};
+// Lista todos os agentes
+function listarAgentes(req, res) {
+  const agentes = agentesRepository.listar();
+  res.status(200).json(agentes);
+}
 
-exports.obterAgentePorId = (req, res) => {
-  const id = parseInt(req.params.id);
-  const agente = agentes.find(a => a.id === id);
+// Busca um agente por ID
+function buscarAgentePorId(req, res) {
+  const { id } = req.params;
+  const agente = agentesRepository.buscarPorId(id);
+
   if (!agente) {
     return res.status(404).json({ mensagem: 'Agente não encontrado' });
   }
-  res.json(agente);
-};
 
-exports.criarAgente = (req, res) => {
-  const { nome, matricula, cargo } = req.body;
-  const novoAgente = { id: idCounter++, nome, matricula, cargo };
-  agentes.push(novoAgente);
+  res.status(200).json(agente);
+}
+
+// Cria um novo agente
+function criarAgente(req, res) {
+  const { nome, identificacao, status } = req.body;
+
+  if (!nome || !identificacao || !status) {
+    return res.status(400).json({ mensagem: 'Campos nome, identificacao e status são obrigatórios' });
+  }
+
+  const statusValido = ['ativo', 'inativo'].includes(status.toLowerCase());
+  if (!statusValido) {
+    return res.status(400).json({ mensagem: 'Status deve ser "ativo" ou "inativo"' });
+  }
+
+  const novoAgente = {
+    id: uuidv4(),
+    nome,
+    identificacao,
+    status: status.toLowerCase()
+  };
+
+  agentesRepository.criar(novoAgente);
   res.status(201).json(novoAgente);
-};
+}
 
-exports.atualizarAgente = (req, res) => {
-  const id = parseInt(req.params.id);
-  const { nome, matricula, cargo } = req.body;
-  const agente = agentes.find(a => a.id === id);
-  if (!agente) {
+// Atualiza totalmente um agente
+function atualizarAgente(req, res) {
+  const { id } = req.params;
+  const { nome, identificacao, status } = req.body;
+
+  const agenteExistente = agentesRepository.buscarPorId(id);
+  if (!agenteExistente) {
     return res.status(404).json({ mensagem: 'Agente não encontrado' });
   }
-  agente.nome = nome ?? agente.nome;
-  agente.matricula = matricula ?? agente.matricula;
-  agente.cargo = cargo ?? agente.cargo;
-  res.json(agente);
-};
 
-exports.deletarAgente = (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = agentes.findIndex(a => a.id === id);
-  if (index === -1) {
+  if (!nome || !identificacao || !status) {
+    return res.status(400).json({ mensagem: 'Campos nome, identificacao e status são obrigatórios' });
+  }
+
+  const statusValido = ['ativo', 'inativo'].includes(status.toLowerCase());
+  if (!statusValido) {
+    return res.status(400).json({ mensagem: 'Status deve ser "ativo" ou "inativo"' });
+  }
+
+  const agenteAtualizado = {
+    id,
+    nome,
+    identificacao,
+    status: status.toLowerCase()
+  };
+
+  agentesRepository.atualizar(id, agenteAtualizado);
+  res.status(200).json(agenteAtualizado);
+}
+
+// Atualiza parcialmente um agente
+function atualizarParcialAgente(req, res) {
+  const { id } = req.params;
+  const dadosAtualizacao = req.body;
+
+  const agenteExistente = agentesRepository.buscarPorId(id);
+  if (!agenteExistente) {
     return res.status(404).json({ mensagem: 'Agente não encontrado' });
   }
-  agentes.splice(index, 1);
+
+  if (dadosAtualizacao.status && !['ativo', 'inativo'].includes(dadosAtualizacao.status.toLowerCase())) {
+    return res.status(400).json({ mensagem: 'Status deve ser "ativo" ou "inativo"' });
+  }
+
+  const agenteAtualizado = agentesRepository.atualizarParcial(id, dadosAtualizacao);
+  res.status(200).json(agenteAtualizado);
+}
+
+// Remove um agente
+function deletarAgente(req, res) {
+  const { id } = req.params;
+
+  const agenteExistente = agentesRepository.buscarPorId(id);
+  if (!agenteExistente) {
+    return res.status(404).json({ mensagem: 'Agente não encontrado' });
+  }
+
+  agentesRepository.deletar(id);
   res.status(204).send();
+}
+
+module.exports = {
+  listarAgentes,
+  buscarAgentePorId,
+  criarAgente,
+  atualizarAgente,
+  atualizarParcialAgente,
+  deletarAgente
 };
