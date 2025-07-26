@@ -1,96 +1,98 @@
-const casosRepository = require('../repositories/casosRepository');
+const { v4: uuidv4 } = require('uuid');
+const {
+  listarCasos,
+  buscarCasoPorId,
+  criarCaso,
+  atualizarCaso,
+  atualizarParcialCaso,
+  deletarCaso
+} = require('../repositories/casosRepository');
+const { validarCaso } = require('../validators/validarCaso');
 
-function validarCaso(caso) {
-  const { titulo, descricao, status, data } = caso;
-  if (!titulo || !descricao || !status || !data) {
-    return 'Todos os campos (titulo, descricao, status, data) são obrigatórios.';
-  }
-
-  const statusPermitidos = ['aberto', 'em andamento', 'fechado'];
-  if (!statusPermitidos.includes(status.toLowerCase())) {
-    return 'Status inválido. Use: "aberto", "em andamento" ou "fechado".';
-  }
-
-  if (isNaN(Date.parse(data))) {
-    return 'Data inválida. Use o formato AAAA-MM-DD.';
-  }
-
-  return null;
-}
-
-function listarCasos(req, res) {
-  const casos = casosRepository.listarCasos();
+// Listar todos os casos
+function obterTodosCasos(req, res) {
+  const casos = listarCasos();
   res.json(casos);
 }
 
-function buscarCasoPorId(req, res) {
-  const caso = casosRepository.encontrarCasoPorId(req.params.id);
+// Buscar caso por ID
+function obterCasoPorId(req, res) {
+  const { id } = req.params;
+  const caso = buscarCasoPorId(id);
   if (!caso) {
     return res.status(404).json({ mensagem: 'Caso não encontrado.' });
   }
   res.json(caso);
 }
 
-function criarCaso(req, res) {
-  const erro = validarCaso(req.body);
-  if (erro) {
-    return res.status(400).json({ mensagem: erro });
+// Criar novo caso
+function criarNovoCaso(req, res) {
+  const dados = req.body;
+  const erros = validarCaso(dados);
+
+  if (erros.length > 0) {
+    return res.status(400).json({ erros });
   }
-  const novoCaso = casosRepository.criarCaso(req.body);
+
+  const novoCaso = {
+    id: uuidv4(),
+    ...dados
+  };
+
+  criarCaso(novoCaso);
   res.status(201).json(novoCaso);
 }
 
-function atualizarCaso(req, res) {
-  const erro = validarCaso(req.body);
-  if (erro) {
-    return res.status(400).json({ mensagem: erro });
-  }
-  const casoAtualizado = casosRepository.atualizarCaso(req.params.id, req.body);
-  if (!casoAtualizado) {
+// Atualizar caso (PUT)
+function atualizarCasoPorId(req, res) {
+  const { id } = req.params;
+  const dados = req.body;
+  const casoExistente = buscarCasoPorId(id);
+
+  if (!casoExistente) {
     return res.status(404).json({ mensagem: 'Caso não encontrado.' });
   }
+
+  const erros = validarCaso(dados);
+  if (erros.length > 0) {
+    return res.status(400).json({ erros });
+  }
+
+  const casoAtualizado = atualizarCaso(id, dados);
   res.json(casoAtualizado);
 }
 
-function atualizarParcialmenteCaso(req, res) {
-  const camposPermitidos = ['titulo', 'descricao', 'status', 'data'];
-  const camposAtualizados = Object.keys(req.body);
-  const camposInvalidos = camposAtualizados.filter(campo => !camposPermitidos.includes(campo));
-  if (camposInvalidos.length > 0) {
-    return res.status(400).json({ mensagem: `Campos inválidos: ${camposInvalidos.join(', ')}` });
-  }
+// Atualizar parcialmente caso (PATCH)
+function atualizarParcialCasoPorId(req, res) {
+  const { id } = req.params;
+  const dados = req.body;
+  const casoExistente = buscarCasoPorId(id);
 
-  if (req.body.status) {
-    const statusPermitidos = ['aberto', 'em andamento', 'fechado'];
-    if (!statusPermitidos.includes(req.body.status.toLowerCase())) {
-      return res.status(400).json({ mensagem: 'Status inválido. Use: "aberto", "em andamento" ou "fechado".' });
-    }
-  }
-
-  if (req.body.data && isNaN(Date.parse(req.body.data))) {
-    return res.status(400).json({ mensagem: 'Data inválida. Use o formato AAAA-MM-DD.' });
-  }
-
-  const casoAtualizado = casosRepository.atualizarParcialmenteCaso(req.params.id, req.body);
-  if (!casoAtualizado) {
+  if (!casoExistente) {
     return res.status(404).json({ mensagem: 'Caso não encontrado.' });
   }
+
+  const casoAtualizado = atualizarParcialCaso(id, dados);
   res.json(casoAtualizado);
 }
 
-function deletarCaso(req, res) {
-  const deletado = casosRepository.deletarCaso(req.params.id);
-  if (!deletado) {
+// Deletar caso
+function deletarCasoPorId(req, res) {
+  const { id } = req.params;
+  const sucesso = deletarCaso(id);
+
+  if (!sucesso) {
     return res.status(404).json({ mensagem: 'Caso não encontrado.' });
   }
-  res.status(204).send(); // No Content
+
+  res.status(204).send();
 }
 
 module.exports = {
-  listarCasos,
-  buscarCasoPorId,
-  criarCaso,
-  atualizarCaso,
-  atualizarParcialmenteCaso,
-  deletarCaso
+  obterTodosCasos,
+  obterCasoPorId,
+  criarNovoCaso,
+  atualizarCasoPorId,
+  atualizarParcialCasoPorId,
+  deletarCasoPorId
 };

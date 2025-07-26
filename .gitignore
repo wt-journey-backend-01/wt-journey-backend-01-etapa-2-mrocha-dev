@@ -1,1 +1,29 @@
+# Ignorar a pasta node_modules (bibliotecas instaladas)
+node_modules/
+
+# Ignorar logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignorar arquivos temporários do sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar arquivos de ambiente (variáveis de ambiente)
+.env
+
+# Ignorar arquivos de build (caso tenha)
+dist/
+build/
+
+# Ignorar diretórios do editor (exemplo VSCode)
+.vscode/
+.idea/
+
+# Ignorar pacotes lock desnecessários (caso queira)
+package-lock.json
+yarn.lock
 

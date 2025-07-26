@@ -2,47 +2,45 @@ const { v4: uuidv4 } = require('uuid');
 
 let agentes = [];
 
-function listarAgentes() {
+function listar() {
   return agentes;
 }
 
-function obterAgentePorId(id) {
-  return agentes.find(a => a.id === id);
+function buscarPorId(id) {
+  return agentes.find(agente => agente.id === id);
 }
 
-function criarAgente({ nome, matricula, cargo, dataDeIncorporacao, disponivel }) {
-  const novoAgente = {
-    id: uuidv4(),
-    nome,
-    matricula,
-    cargo,
-    dataDeIncorporacao,
-    disponivel: disponivel ?? true,
-  };
-  agentes.push(novoAgente);
-  return novoAgente;
+function criar(agente) {
+  agentes.push(agente);
+  return agente;
 }
 
-function atualizarAgente(id, novosDados) {
-  const agente = obterAgentePorId(id);
+function atualizar(id, novosDados) {
+  const agente = buscarPorId(id);
   if (!agente) return null;
-
   Object.assign(agente, novosDados);
   return agente;
 }
 
-function deletarAgente(id) {
-  const index = agentes.findIndex(a => a.id === id);
-  if (index === -1) return false;
+function atualizarParcial(id, dadosParciais) {
+  const agente = buscarPorId(id);
+  if (!agente) return null;
+  Object.assign(agente, dadosParciais);
+  return agente;
+}
 
+function deletar(id) {
+  const index = agentes.findIndex(agente => agente.id === id);
+  if (index === -1) return false;
   agentes.splice(index, 1);
   return true;
 }
 
 module.exports = {
-  listarAgentes,
-  obterAgentePorId,
-  criarAgente,
-  atualizarAgente,
-  deletarAgente,
+  listar,
+  buscarPorId,
+  criar,
+  atualizar,
+  atualizarParcial,
+  deletar
 };

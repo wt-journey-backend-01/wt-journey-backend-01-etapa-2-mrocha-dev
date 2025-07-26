@@ -1,107 +1,128 @@
 const { v4: uuidv4 } = require('uuid');
-const agentesRepository = require('../repositories/agentesRepository');
+const AgenteRepository = require('../repositories/agenteRepository');
+const validarAgente = require('../validators/validarAgente');
 
-// Lista todos os agentes
-function listarAgentes(req, res) {
-  const agentes = agentesRepository.listar();
-  res.status(200).json(agentes);
+// Listar todos os agentes
+function listarAgentes(req, res, next) {
+  try {
+    const agentes = AgenteRepository.listar();
+    res.status(200).json(agentes);
+  } catch (err) {
+    next(err); // envia para o errorHandler
+  }
 }
 
-// Busca um agente por ID
-function buscarAgentePorId(req, res) {
-  const { id } = req.params;
-  const agente = agentesRepository.buscarPorId(id);
+// Buscar agente por ID
+function buscarAgentePorId(req, res, next) {
+  try {
+    const { id } = req.params;
+    const agente = AgenteRepository.buscarPorId(id);
 
-  if (!agente) {
-    return res.status(404).json({ mensagem: 'Agente não encontrado' });
+    if (!agente) {
+      const erro = new Error('Agente não encontrado.');
+      erro.statusCode = 404;
+      throw erro;
+    }
+
+    res.status(200).json(agente);
+  } catch (err) {
+    next(err);
   }
-
-  res.status(200).json(agente);
 }
 
-// Cria um novo agente
-function criarAgente(req, res) {
-  const { nome, identificacao, status } = req.body;
+// Criar novo agente
+function criarAgente(req, res, next) {
+  try {
+    const dados = req.body;
 
-  if (!nome || !identificacao || !status) {
-    return res.status(400).json({ mensagem: 'Campos nome, identificacao e status são obrigatórios' });
+    const { valido, erros } = validarAgente(dados);
+    if (!valido) {
+      const erro = new Error('Dados inválidos.');
+      erro.statusCode = 400;
+      erro.details = erros;
+      throw erro;
+    }
+
+    const novoAgente = {
+      id: uuidv4(),
+      ...dados
+    };
+
+    AgenteRepository.criar(novoAgente);
+    res.status(201).json(novoAgente);
+  } catch (err) {
+    next(err);
   }
-
-  const statusValido = ['ativo', 'inativo'].includes(status.toLowerCase());
-  if (!statusValido) {
-    return res.status(400).json({ mensagem: 'Status deve ser "ativo" ou "inativo"' });
-  }
-
-  const novoAgente = {
-    id: uuidv4(),
-    nome,
-    identificacao,
-    status: status.toLowerCase()
-  };
-
-  agentesRepository.criar(novoAgente);
-  res.status(201).json(novoAgente);
 }
 
-// Atualiza totalmente um agente
-function atualizarAgente(req, res) {
-  const { id } = req.params;
-  const { nome, identificacao, status } = req.body;
+// Atualizar agente (PUT)
+function atualizarAgente(req, res, next) {
+  try {
+    const { id } = req.params;
+    const dadosAtualizados = req.body;
 
-  const agenteExistente = agentesRepository.buscarPorId(id);
-  if (!agenteExistente) {
-    return res.status(404).json({ mensagem: 'Agente não encontrado' });
+    const agenteExistente = AgenteRepository.buscarPorId(id);
+    if (!agenteExistente) {
+      const erro = new Error('Agente não encontrado.');
+      erro.statusCode = 404;
+      throw erro;
+    }
+
+    const { valido, erros } = validarAgente(dadosAtualizados);
+    if (!valido) {
+      const erro = new Error('Dados inválidos.');
+      erro.statusCode = 400;
+      erro.details = erros;
+      throw erro;
+    }
+
+    const agenteAtualizado = { ...agenteExistente, ...dadosAtualizados };
+    AgenteRepository.atualizar(id, agenteAtualizado);
+
+    res.status(200).json(agenteAtualizado);
+  } catch (err) {
+    next(err);
   }
-
-  if (!nome || !identificacao || !status) {
-    return res.status(400).json({ mensagem: 'Campos nome, identificacao e status são obrigatórios' });
-  }
-
-  const statusValido = ['ativo', 'inativo'].includes(status.toLowerCase());
-  if (!statusValido) {
-    return res.status(400).json({ mensagem: 'Status deve ser "ativo" ou "inativo"' });
-  }
-
-  const agenteAtualizado = {
-    id,
-    nome,
-    identificacao,
-    status: status.toLowerCase()
-  };
-
-  agentesRepository.atualizar(id, agenteAtualizado);
-  res.status(200).json(agenteAtualizado);
 }
 
-// Atualiza parcialmente um agente
-function atualizarParcialAgente(req, res) {
-  const { id } = req.params;
-  const dadosAtualizacao = req.body;
+// Atualização parcial (PATCH)
+function atualizarParcialAgente(req, res, next) {
+  try {
+    const { id } = req.params;
+    const dadosParciais = req.body;
 
-  const agenteExistente = agentesRepository.buscarPorId(id);
-  if (!agenteExistente) {
-    return res.status(404).json({ mensagem: 'Agente não encontrado' });
+    const agenteExistente = AgenteRepository.buscarPorId(id);
+    if (!agenteExistente) {
+      const erro = new Error('Agente não encontrado.');
+      erro.statusCode = 404;
+      throw erro;
+    }
+
+    const agenteAtualizado = { ...agenteExistente, ...dadosParciais };
+    AgenteRepository.atualizar(id, agenteAtualizado);
+
+    res.status(200).json(agenteAtualizado);
+  } catch (err) {
+    next(err);
   }
-
-  if (dadosAtualizacao.status && !['ativo', 'inativo'].includes(dadosAtualizacao.status.toLowerCase())) {
-    return res.status(400).json({ mensagem: 'Status deve ser "ativo" ou "inativo"' });
-  }
-
-  const agenteAtualizado = agentesRepository.atualizarParcial(id, dadosAtualizacao);
-  res.status(200).json(agenteAtualizado);
 }
 
-// Remove um agente
-function deletarAgente(req, res) {
-  const { id } = req.params;
+// Remover agente
+function removerAgente(req, res, next) {
+  try {
+    const { id } = req.params;
+    const removido = AgenteRepository.remover(id);
 
-  const agenteExistente = agentesRepository.buscarPorId(id);
-  if (!agenteExistente) {
-    return res.status(404).json({ mensagem: 'Agente não encontrado' });
+    if (!removido) {
+      const erro = new Error('Agente não encontrado para remoção.');
+      erro.statusCode = 404;
+      throw erro;
+    }
+
+    res.status(204).send(); // Sem conteúdo
+  } catch (err) {
+    next(err);
   }
-
-  agentesRepository.deletar(id);
-  res.status(204).send();
 }
 
 module.exports = {
@@ -110,5 +131,5 @@ module.exports = {
   criarAgente,
   atualizarAgente,
   atualizarParcialAgente,
-  deletarAgente
+  removerAgente
 };
