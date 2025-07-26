@@ -1,237 +1,294 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 9 créditos restantes para usar o sistema de feedback AI.
+Você tem 8 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para mrocha-dev:
 
-Nota final: **7.5/100**
+Nota final: **15.6/100**
 
-# Olá, mrocha-dev! 👋🚀
+# Feedback para mrocha-dev 🚓✨
 
-Primeiramente, parabéns pelo esforço e dedicação em construir sua API para o Departamento de Polícia! 🎉 É muito legal ver que você já estruturou seu projeto com rotas, controladores e até adicionou o Swagger para a documentação — isso mostra que você está no caminho certo para criar APIs organizadas e profissionais. 👏
-
----
-
-## O que você mandou muito bem! 🎯
-
-- Seu **server.js** está configurado corretamente para usar o Express, os middlewares de JSON, as rotas e o Swagger. Isso é fundamental para a base da aplicação.
-- As rotas para `/agentes` e `/casos` estão implementadas com os métodos HTTP principais (GET, POST, PUT, DELETE).
-- Os controladores estão manipulando a resposta com status codes adequados para casos como recurso não encontrado (404) e criação com sucesso (201).
-- Você usou arrays em memória para armazenar os dados, que é o esperado para essa primeira versão.
-- Seu código trata corretamente erros de recurso não encontrado (404) em vários endpoints.
-- Você conseguiu implementar algumas funcionalidades bônus, como o filtro simples por status e busca de agentes responsáveis, o que é um diferencial muito bacana! 🌟
+Olá, mrocha-dev! Tudo bem? Primeiro, quero parabenizá-lo pelo esforço e por já ter colocado no papel uma estrutura bem modularizada para sua API do Departamento de Polícia! 🎉 Você já tem rotas, controllers, repositories e até documentação Swagger configurada — isso é um grande passo e mostra que você está no caminho certo!
 
 ---
 
-## Agora, vamos mergulhar juntos nos pontos importantes para você evoluir ainda mais! 🕵️‍♂️🔍
+## 🎯 O que está funcionando muito bem
 
-### 1. Falta da camada de `repositories`
+- **Organização modular:** Você separou rotas, controllers e repositories, o que é fundamental para manter o código limpo e escalável. Isso facilita muito a manutenção e evolução da API.
+- **Uso do Express e UUID:** O uso do `express.Router()` nas rotas e do pacote `uuid` para gerar IDs é adequado e moderno.
+- **Validações básicas:** Vejo que você implementou validações para os campos obrigatórios e status nos agentes e casos, o que é ótimo para garantir a integridade dos dados.
+- **Swagger configurado:** A documentação da API com Swagger está presente, o que é um diferencial importante.
+- **Filtro simples funcionando:** Você implementou o filtro por keywords no endpoint de casos, o que já traz uma funcionalidade extra para a API, muito legal! 🎉
 
-Um dos pontos mais críticos que percebi no seu projeto é que **a camada de repositórios não existe**. Você está manipulando os arrays diretamente dentro dos controladores (`controllers/agentesController.js` e `controllers/casosController.js`), mas o desafio pede para que os dados sejam manipulados em arquivos separados, na pasta `repositories/`, para organizar melhor o código e separar responsabilidades.
+---
 
-Por exemplo, em `agentesController.js` você tem:
+## 🕵️ Análise detalhada dos pontos que precisam de atenção
+
+### 1. IDs dos agentes e casos não são UUIDs — causa raiz: inconsistência entre controllers e repositories
+
+Um ponto crítico que impacta muitos testes é que o ID esperado para agentes e casos é um UUID, mas no seu código, há uma confusão entre os nomes e formas de lidar com os IDs, causando falha na validação.
+
+- No `controllers/agentesController.js`, você gera o ID com `uuidv4()` ao criar um agente, o que está correto:
 
 ```js
-let agentes = [];
-let idCounter = 1;
-
-exports.listarAgentes = (req, res) => {
-  res.json(agentes);
+const novoAgente = {
+  id: uuidv4(),
+  nome,
+  identificacao,
+  status: status.toLowerCase()
 };
 ```
 
-Mas, idealmente, essa lógica de manipulação do array `agentes` deveria estar em `repositories/agentesRepository.js`, e o controlador chamaria funções desse repositório para listar, criar, atualizar e deletar agentes.
-
-**Por que isso importa?**  
-Separar a manipulação dos dados da lógica de controle deixa seu código mais limpo, fácil de manter e testar. Também evita que o controlador fique sobrecarregado com responsabilidades demais.
-
-**Como corrigir?**  
-Crie os arquivos `repositories/agentesRepository.js` e `repositories/casosRepository.js`, e mova para lá toda a lógica que manipula os arrays e o controle de IDs. Depois, importe essas funções nos controladores e use-as para realizar as operações.
-
----
-
-### 2. Validação de dados e tratamento de erros insuficientes
-
-Notei que seus controladores **não fazem validação dos dados recebidos no corpo das requisições** (payload). Por exemplo, no `criarAgente`:
+- Porém, no `repositories/agentesRepository.js`, as funções usam propriedades diferentes e nomes diferentes, o que causa inconsistência:
 
 ```js
-exports.criarAgente = (req, res) => {
-  const { nome, matricula, cargo } = req.body;
-  const novoAgente = { id: idCounter++, nome, matricula, cargo };
+function listarAgentes() {
+  return agentes;
+}
+
+function obterAgentePorId(id) {
+  return agentes.find(a => a.id === id);
+}
+
+function criarAgente({ nome, matricula, cargo, dataDeIncorporacao, disponivel }) {
+  const novoAgente = {
+    id: uuidv4(),
+    nome,
+    matricula,
+    cargo,
+    dataDeIncorporacao,
+    disponivel: disponivel ?? true,
+  };
   agentes.push(novoAgente);
-  res.status(201).json(novoAgente);
-};
-```
-
-Aqui, você aceita qualquer dado, mesmo que `nome` seja vazio ou `matricula` esteja ausente. Isso faz com que sua API aceite dados inválidos, o que pode causar problemas no futuro.
-
-Além disso, não há validação de formatos importantes, como:
-
-- O campo `id` deveria ser um UUID (você está usando números sequenciais).
-- A data de incorporação do agente (que nem aparece no seu código) deve ser validada para estar no formato correto (YYYY-MM-DD) e não pode ser uma data futura.
-- No caso, o campo `status` só deve aceitar valores como `'aberto'` ou `'solucionado'`.
-
-**Por que isso importa?**  
-Sem validação, sua API pode aceitar dados errados, causando inconsistências e erros difíceis de rastrear. Além disso, a experiência do consumidor da API piora, pois ele não recebe feedback claro do que está errado.
-
-**Como melhorar?**  
-Você pode usar bibliotecas como [Joi](https://joi.dev/) ou [express-validator](https://express-validator.github.io/docs/) para validar os dados enviados antes de processá-los. Também pode criar funções manuais para validar os campos essenciais.
-
-Exemplo simples de validação manual:
-
-```js
-if (!nome || typeof nome !== 'string' || nome.trim() === '') {
-  return res.status(400).json({ mensagem: 'Nome do agente é obrigatório e deve ser uma string não vazia.' });
+  return novoAgente;
 }
 ```
 
-Recomendo muito assistir este vídeo para entender validação e tratamento de erros:  
-👉 https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_
+Aqui, o `criarAgente` do repository espera campos como `matricula` e `cargo`, enquanto o controller usa `nome`, `identificacao` e `status`. Além disso, o controller chama `agentesRepository.criar(novoAgente)`, mas no repository a função chama-se `criarAgente`. Isso indica que as funções do repository não estão sendo chamadas corretamente, ou que os nomes estão divergentes.
 
----
-
-### 3. Uso de IDs numéricos sequenciais em vez de UUIDs
-
-Você está usando um contador simples para gerar IDs:
-
-```js
-let idCounter = 1;
-const novoAgente = { id: idCounter++, nome, matricula, cargo };
-```
-
-No desafio, o esperado é que os IDs sejam UUIDs, que são identificadores únicos universais, garantindo que não haja colisão e que o formato do ID seja válido.
-
-**Por que isso importa?**  
-Muitos sistemas usam UUIDs para garantir unicidade e segurança. Além disso, a validação dos IDs fica mais robusta, e você evita problemas ao integrar com outras APIs ou bancos de dados.
+**Por quê isso é importante?**  
+Essa divergência faz com que o agente não seja criado corretamente no array de agentes, e o ID não seja gerado ou buscado corretamente, o que causa falhas em praticamente todas as operações (criar, buscar, atualizar, deletar).
 
 **Como corrigir?**  
-Você pode usar a biblioteca `uuid` para gerar esses IDs:
+Você deve alinhar os nomes das funções e os parâmetros entre controller e repository. Por exemplo:
 
-```bash
-npm install uuid
-```
+- No `agentesRepository.js`, renomeie as funções para `listar()`, `buscarPorId()`, `criar()`, `atualizar()`, `deletar()`, para combinar com o que o controller chama.
+- Ajuste os parâmetros para que o controller envie os mesmos campos que o repository espera.
 
-E no seu código:
+Exemplo de ajuste no repository:
 
 ```js
-const { v4: uuidv4 } = require('uuid');
+let agentes = [];
 
-const novoAgente = { id: uuidv4(), nome, matricula, cargo };
+function listar() {
+  return agentes;
+}
+
+function buscarPorId(id) {
+  return agentes.find(a => a.id === id);
+}
+
+function criar(agente) {
+  agentes.push(agente);
+  return agente;
+}
+
+function atualizar(id, novosDados) {
+  const agente = buscarPorId(id);
+  if (!agente) return null;
+  Object.assign(agente, novosDados);
+  return agente;
+}
+
+function deletar(id) {
+  const index = agentes.findIndex(a => a.id === id);
+  if (index === -1) return false;
+  agentes.splice(index, 1);
+  return true;
+}
+
+module.exports = {
+  listar,
+  buscarPorId,
+  criar,
+  atualizar,
+  deletar,
+};
 ```
+
+Assim, seu controller pode continuar chamando essas funções com os nomes corretos e os dados corretos.
 
 ---
 
-### 4. Atualização parcial com PATCH não implementada
+### 2. Mesma inconsistência acontece no repositório de casos
 
-Vi que no seu `agentesRoutes.js` você só implementou PUT e não PATCH:
+No `controllers/casosController.js` você usa funções como `listarCasos()`, `encontrarCasoPorId()`, `criarCaso()`, etc., e no `repositories/casosRepository.js` as funções têm nomes diferentes, mas menos discrepantes. Porém, vale a pena garantir que o controller chame os métodos exatamente como exportados no repository.
 
-```js
-router.put('/:id', agentesController.atualizarAgente);
+Além disso, note que o controller espera todos os campos (`titulo`, `descricao`, `status`, `data`), mas no Swagger das rotas `/casos` o campo `descricao` não é obrigatório no POST:
+
+```yaml
+required:
+  - titulo
+  - status
 ```
 
-Mas o desafio pede para implementar também o método PATCH para atualizações parciais.
+Enquanto na validação do controller você exige todos os campos:
+
+```js
+function validarCaso(caso) {
+  const { titulo, descricao, status, data } = caso;
+  if (!titulo || !descricao || !status || !data) {
+    return 'Todos os campos (titulo, descricao, status, data) são obrigatórios.';
+  }
+  // ...
+}
+```
+
+**Isso gera conflito:** o Swagger diz que `descricao` não é obrigatório, mas o controller exige. Além disso, o campo `data` não aparece no Swagger, mas o controller exige. Isso pode causar erro 400 para payloads que seguem o Swagger.
+
+**Como corrigir?**  
+Você deve alinhar o Swagger e o controller para que os campos obrigatórios sejam os mesmos. Por exemplo, se `data` é obrigatório, adicione no Swagger; se não for, ajuste a validação para aceitar ausência.
+
+---
+
+### 3. Falta de filtros e endpoints para buscas específicas (bônus não implementado)
+
+Os testes bônus indicam que faltam filtros por status em casos, busca de agente responsável por caso, e filtros com ordenação por data de incorporação em agentes.
+
+No seu código, não encontrei esses filtros implementados. Por exemplo, no `casosController.js` o método `listarCasos` simplesmente retorna todos os casos sem filtros:
+
+```js
+function listarCasos(req, res) {
+  const casos = casosRepository.listarCasos();
+  res.json(casos);
+}
+```
+
+**Como melhorar?**  
+Você pode implementar query params para filtrar, ordenar e paginar os resultados, por exemplo:
+
+```js
+function listarCasos(req, res) {
+  let casos = casosRepository.listarCasos();
+
+  if (req.query.status) {
+    casos = casos.filter(caso => caso.status.toLowerCase() === req.query.status.toLowerCase());
+  }
+
+  // Implementar outros filtros e ordenações aqui
+
+  res.json(casos);
+}
+```
+
+Assim, você vai atender aos bônus e melhorar muito a experiência da API!
+
+---
+
+### 4. Estrutura de diretórios e arquivos
+
+Sua estrutura está quase correta, mas percebi que:
+
+- Você tem um arquivo `swagger.js` e um `swagger.json` dentro da raiz, enquanto o esperado é que a pasta `docs/` contenha a documentação (por exemplo, `docs/swagger.js`).
+- Não vi a pasta `utils/` com o arquivo `errorHandler.js`, que é recomendado para centralizar tratamento de erros.
+- Além disso, a falta do `.gitignore` configurado para ignorar `node_modules` pode causar problemas no versionamento.
 
 **Por que isso importa?**  
-PATCH permite atualizar só os campos que foram enviados, sem precisar enviar o objeto completo, o que é uma prática comum e esperada em APIs RESTful.
+Manter a estrutura correta é fundamental para que o projeto seja facilmente compreendido por outros desenvolvedores e para que os testes e deploys funcionem corretamente.
 
-**Como implementar?**  
-Você pode adicionar no seu arquivo de rotas:
+**Como corrigir?**  
+Organize os arquivos assim:
 
-```js
-router.patch('/:id', agentesController.atualizarAgenteParcial);
+```
+.
+├── controllers/
+├── repositories/
+├── routes/
+├── docs/
+│   └── swagger.js
+├── utils/
+│   └── errorHandler.js
+├── server.js
+├── package.json
+├── .gitignore
 ```
 
-E no controlador, criar a função `atualizarAgenteParcial` que atualiza apenas os campos presentes no corpo da requisição.
+E no `.gitignore` inclua:
+
+```
+node_modules/
+```
 
 ---
 
-### 5. Resposta inadequada no DELETE de casos
+### 5. Validação dos IDs e payloads
 
-No seu `controllers/casosController.js`, o método `deletarCaso` retorna um JSON com mensagem após deletar:
+Vi que você está usando UUID para gerar IDs, mas no Swagger das rotas, o parâmetro `id` está definido como `integer`:
 
-```js
-casos.splice(index, 1);
-res.json({ mensagem: 'Caso removido com sucesso' });
+```yaml
+parameters:
+  - in: path
+    name: id
+    required: true
+    schema:
+      type: integer
 ```
 
-O correto, de acordo com boas práticas REST, é retornar status **204 No Content** e não enviar corpo na resposta para DELETE.
+Isso causa confusão, pois o ID gerado é uma string UUID, mas o Swagger espera número inteiro. Isso pode confundir quem consome a API e afetar validações.
 
 **Como corrigir?**
 
-```js
-casos.splice(index, 1);
-res.status(204).send();
+Altere o Swagger para refletir o tipo correto:
+
+```yaml
+schema:
+  type: string
+  format: uuid
 ```
 
----
-
-### 6. Estrutura de diretórios incompleta
-
-Percebi que sua estrutura não contém a pasta `repositories/`, que é obrigatória para organizar a manipulação dos dados, conforme explicado no ponto 1.
-
-Além disso, o README, `.gitignore` e a pasta `docs/` com o Swagger.js (não apenas o JSON) são esperados para um projeto mais completo.
-
-**Por que isso importa?**  
-Seguir a arquitetura modular e a estrutura de pastas ajuda na escalabilidade do projeto e facilita a colaboração em equipe.
+Assim, a documentação fica alinhada com a implementação.
 
 ---
 
-### 7. Validação e restrições específicas faltando
+## 📚 Recomendações de aprendizado para você arrasar ainda mais!
 
-- O campo `dataDeIncorporacao` dos agentes não está sendo tratado nem validado.
-- Não há restrição para que um agente com `nome` vazio seja criado.
-- Não há validação para impedir que o `status` do caso seja diferente de `'aberto'` ou `'solucionado'`.
-- Permite alterar o ID de agentes e casos via PUT, o que não deve acontecer.
+- Para entender melhor como organizar rotas e controllers no Express.js:  
+  https://expressjs.com/pt-br/guide/routing.html
 
----
+- Para entender arquitetura MVC e organização de projetos Node.js:  
+  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
 
-## Dicas para você avançar com confiança! 💡
+- Para aprofundar na validação de dados e tratamento de erros em APIs:  
+  https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_
 
-- Separe responsabilidades: crie os repositórios para manipular dados e deixe os controladores apenas para lógica de negócio e respostas HTTP.
-- Implemente validações robustas para garantir que só dados válidos sejam aceitos.
-- Utilize UUID para IDs, garantindo unicidade e padrão.
-- Implemente o método PATCH para atualizações parciais.
-- Retorne status HTTP corretos, como 204 para DELETE.
-- Organize seu projeto conforme a estrutura esperada para facilitar manutenção e leitura.
+- Para entender o protocolo HTTP, status codes e métodos:  
+  https://youtu.be/RSZHvQomeKE?si=PSkGqpWSRY90Ded5
 
----
-
-## Recursos para você aprender e aplicar já! 📚
-
-- **Arquitetura MVC e organização de arquivos:**  
-https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
-
-- **Validação de dados em APIs Node.js/Express:**  
-https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_
-
-- **Documentação oficial do Express.js sobre rotas:**  
-https://expressjs.com/pt-br/guide/routing.html
-
-- **Como usar UUIDs em Node.js:**  
-https://www.npmjs.com/package/uuid
-
-- **Status HTTP 204 No Content e boas práticas REST:**  
-https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/204
+- Para manipulação de arrays no JavaScript (filter, find, map):  
+  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
 
 ---
 
-## Resumo rápido para você focar:
+## 🔑 Resumo dos principais pontos para focar na próxima versão
 
-- [ ] Crie a pasta `repositories/` e mova a manipulação dos arrays para lá.
-- [ ] Implemente validação rigorosa dos dados recebidos (payload).
-- [ ] Use UUID para os IDs dos agentes e casos.
-- [ ] Adicione o método PATCH para atualizações parciais.
-- [ ] Corrija os status HTTP retornados, especialmente em DELETE.
-- [ ] Valide campos obrigatórios e formatos (datas, status, nomes).
-- [ ] Organize seu projeto conforme a estrutura modular esperada.
+- **Alinhe os nomes e parâmetros das funções entre controllers e repositories** para garantir que os dados estejam sendo criados, lidos, atualizados e deletados corretamente.  
+- **Consistência na validação dos campos obrigatórios entre Swagger e controllers**, especialmente para casos (descrição e data).  
+- **Corrija o tipo dos parâmetros `id` no Swagger para UUID (string)**, para coincidir com o que é gerado no código.  
+- **Implemente os filtros e ordenações para agentes e casos**, para atender os bônus e tornar a API mais robusta.  
+- **Organize a estrutura de pastas e arquivos conforme o padrão esperado**, incluindo a criação da pasta `utils` e o arquivo para tratamento de erros.  
+- **Configure o `.gitignore` para ignorar `node_modules`**, evitando problemas no repositório.  
 
 ---
 
-mrocha-dev, você já tem uma base sólida e mostrou que sabe estruturar rotas e controladores! Agora, com essas melhorias, sua API vai ficar muito mais robusta, profissional e alinhada com as boas práticas do mercado. 💪✨
+## Finalizando... 🚀
 
-Continue firme, que você está no caminho certo! Se precisar de ajuda para implementar alguma dessas melhorias, estou aqui para te ajudar! 🚀😄
+mrocha-dev, seu projeto já tem uma base muito boa e com algumas correções você vai conseguir destravar todas as funcionalidades e entregar uma API super profissional! Continue praticando, alinhando a arquitetura e validando os dados com cuidado — isso vai te deixar pronto para desafios ainda maiores! 💪
 
-Um abraço de Code Buddy! 🤖💙
+Se precisar de ajuda para implementar qualquer ponto, estou aqui para te acompanhar nessa jornada!
+
+Bora codar e deixar essa API tinindo? ✨👊
+
+Abraços do seu Code Buddy! 😄👨‍💻👩‍💻
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
