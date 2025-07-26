@@ -1,19 +1,34 @@
 function validarCaso(dados) {
   const erros = [];
 
-  if (!dados.titulo || dados.titulo.trim() === '') {
-    erros.push('Título é obrigatório.');
+  if (!dados.titulo || typeof dados.titulo !== 'string') {
+    erros.push('O campo "titulo" é obrigatório e deve ser uma string.');
   }
 
-  if (!dados.descricao || dados.descricao.trim() === '') {
-    erros.push('Descrição é obrigatória.');
+  if (!dados.descricao || typeof dados.descricao !== 'string') {
+    erros.push('O campo "descricao" é obrigatório e deve ser uma string.');
   }
 
-  if (!dados.data || isNaN(Date.parse(dados.data))) {
-    erros.push('Data deve ser uma data válida (formato ISO).');
+  if (!dados.status || typeof dados.status !== 'string') {
+    erros.push('O campo "status" é obrigatório e deve ser uma string.');
+  } else {
+    const statusValido = ['em andamento', 'encerrado', 'arquivado'];
+    if (!statusValido.includes(dados.status.toLowerCase())) {
+      erros.push('O campo "status" deve ser: "em andamento", "encerrado" ou "arquivado".');
+    }
+  }
+
+  if (!dados.data || !isDataValida(dados.data)) {
+    erros.push('O campo "data" é obrigatório e deve estar no formato válido (AAAA-MM-DD).');
   }
 
   return erros;
 }
 
-module.exports = validarCaso;
+function isDataValida(data) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(data) && !isNaN(Date.parse(data));
+}
+
+module.exports = {
+  validarCaso
+};

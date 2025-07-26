@@ -17,4 +17,39 @@ function validarAgente(dados) {
   return erros;
 }
 
-module.exports = validarAgente;
+// NOVA FUNÇÃO: para PATCH
+function validarCamposParciais(dados) {
+  const erros = [];
+  const statusPermitidos = ['ativo', 'inativo'];
+
+  Object.keys(dados).forEach((campo) => {
+    const valor = dados[campo];
+
+    switch (campo) {
+      case 'nome':
+        if (typeof valor !== 'string' || valor.trim() === '') {
+          erros.push('Nome deve ser uma string não vazia.');
+        }
+        break;
+      case 'cargo':
+        if (typeof valor !== 'string' || valor.trim() === '') {
+          erros.push('Cargo deve ser uma string não vazia.');
+        }
+        break;
+      case 'status':
+        if (typeof valor !== 'string' || !statusPermitidos.includes(valor.toLowerCase())) {
+          erros.push('Status deve ser "ativo" ou "inativo".');
+        }
+        break;
+      default:
+        erros.push(`Campo inválido: ${campo}`);
+    }
+  });
+
+  return erros;
+}
+
+module.exports = {
+  validarAgente,
+  validarCamposParciais
+};
