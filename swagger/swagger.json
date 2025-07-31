@@ -1,0 +1,200 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API DevPolicia",
+    "version": "1.0.0",
+    "description": "Documentação da API para gerenciamento de casos policiais"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "paths": {
+    "/casos": {
+      "get": {
+        "summary": "Listar todos os casos",
+        "responses": {
+          "200": {
+            "description": "Lista de casos"
+          }
+        }
+      },
+      "post": {
+        "summary": "Cadastrar um novo caso",
+        "responses": {
+          "201": {
+            "description": "Caso cadastrado com sucesso"
+          },
+          "400": {
+            "description": "Dados inválidos"
+          }
+        }
+      }
+    },
+    "/casos/{id}": {
+      "get": {
+        "summary": "Buscar um caso pelo ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Caso encontrado" },
+          "404": { "description": "Caso não encontrado" }
+        }
+      },
+      "put": {
+        "summary": "Atualizar um caso por completo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Caso atualizado" },
+          "400": { "description": "Dados inválidos" },
+          "404": { "description": "Caso não encontrado" }
+        }
+      },
+      "patch": {
+        "summary": "Atualizar parcialmente um caso",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Caso parcialmente atualizado" },
+          "404": { "description": "Caso não encontrado" }
+        }
+      },
+      "delete": {
+        "summary": "Deletar um caso",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Caso deletado" },
+          "404": { "description": "Caso não encontrado" }
+        }
+      }
+    },
+    "/casos/{caso_id}/agente": {
+      "get": {
+        "summary": "Buscar agente associado ao caso",
+        "parameters": [
+          {
+            "name": "caso_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Agente encontrado" },
+          "404": { "description": "Agente ou caso não encontrado" }
+        }
+      }
+    },
+    "/agentes": {
+      "get": {
+        "summary": "Listar todos os agentes",
+        "responses": {
+          "200": {
+            "description": "Lista de agentes"
+          }
+        }
+      },
+      "post": {
+        "summary": "Cadastrar um novo agente",
+        "responses": {
+          "201": {
+            "description": "Agente cadastrado com sucesso"
+          },
+          "400": {
+            "description": "Dados inválidos"
+          }
+        }
+      }
+    },
+    "/agentes/{id}": {
+      "get": {
+        "summary": "Buscar um agente pelo ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Agente encontrado" },
+          "404": { "description": "Agente não encontrado" }
+        }
+      },
+      "put": {
+        "summary": "Atualizar um agente por completo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Agente atualizado" },
+          "400": { "description": "Dados inválidos" },
+          "404": { "description": "Agente não encontrado" }
+        }
+      },
+      "patch": {
+        "summary": "Atualizar parcialmente um agente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Agente parcialmente atualizado" },
+          "404": { "description": "Agente não encontrado" }
+        }
+      },
+      "delete": {
+        "summary": "Deletar um agente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Agente deletado" },
+          "404": { "description": "Agente não encontrado" }
+        }
+      }
+    }
+  }
+}
