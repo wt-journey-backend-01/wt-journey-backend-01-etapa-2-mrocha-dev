@@ -1,67 +1,99 @@
+const {
+  findAll,
+  findById,
+  create,
+  update,
+  patch,
+  remove,
+} = require('../repositories/casosRepository');
 const { validationResult } = require('express-validator');
-const casosRepository = require('../repositories/casosRepository');
-const agentesRepository = require('../repositories/agentesRepository');
-const { v4: uuidv4 } = require('uuid');
 
-function listarCasos(req, res) {
-  const { agente_id, status, q } = req.query;
-  let casos = casosRepository.findAll();
-
-  if (agente_id) casos = casos.filter(c => c.agente_id === agente_id);
-  if (status) casos = casos.filter(c => c.status === status);
-  if (q) casos = casos.filter(c => c.descricao.toLowerCase().includes(q.toLowerCase()));
-
-  res.status(200).json(casos);
+async function listarCasos(req, res) {
+  try {
+    const casos = await findAll();
+    res.status(200).json(casos);
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao listar casos.', error: error.message });
+  }
 }
 
-function buscarCasoPorId(req, res) {
-  const caso = casosRepository.findById(req.params.id);
-  if (!caso) return res.status(404).json({ message: 'Caso não encontrado' });
-  res.status(200).json(caso);
+async function buscarCasoPorId(req, res) {
+  try {
+    const { id } = req.params;
+    const caso = await findById(id);
+    if (!caso) return res.status(404).json({ mensagem: 'Caso não encontrado.' });
+    res.status(200).json(caso);
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao buscar caso.', error: error.message });
+  }
 }
 
-function cadastrarCaso(req, res) {
+async function cadastrarCaso(req, res) {
   const erros = validationResult(req);
-  if (!erros.isEmpty()) return res.status(400).json({ errors: erros.array() });
+  if (!erros.isEmpty()) return res.status(400).json({ erros: erros.array() });
 
-  const { agente_id } = req.body;
-  const agente = agentesRepository.findById(agente_id);
-  if (!agente) return res.status(404).json({ message: 'Agente responsável não encontrado' });
-
-  const novoCaso = { id: uuidv4(), ...req.body };
-  casosRepository.create(novoCaso);
-  res.status(201).json(novoCaso);
+  try {
+    const novoCaso = await create(req.body);
+    res.status(201).json(novoCaso);
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao cadastrar caso.', error: error.message });
+  }
 }
 
-function atualizarCaso(req, res) {
+async function atualizarCaso(req, res) {
   const erros = validationResult(req);
-  if (!erros.isEmpty()) return res.status(400).json({ errors: erros.array() });
+  if (!erros.isEmpty()) return res.status(400).json({ erros: erros.array() });
 
-  const atualizado = casosRepository.update(req.params.id, req.body);
-  if (!atualizado) return res.status(404).json({ message: 'Caso não encontrado' });
-  res.status(200).json(atualizado);
+  try {
+    const { id } = req.params;
+    const atualizado = await update(id, req.body);
+    if (!atualizado) return res.status(404).json({ mensagem: 'Caso não encontrado.' });
+    res.status(200).json(atualizado);
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao atualizar caso.', error: error.message });
+  }
 }
 
-function atualizarParcialCaso(req, res) {
-  const atualizado = casosRepository.update(req.params.id, req.body);
-  if (!atualizado) return res.status(404).json({ message: 'Caso não encontrado' });
-  res.status(200).json(atualizado);
+async function atualizarParcialCaso(req, res) {
+  try {
+    const { id } = req.params;
+    const atualizado = await patch(id, req.body);
+    if (!atualizado) return res.status(404).json({ mensagem: 'Caso não encontrado.' });
+    res.status(200).json(atualizado);
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao atualizar parcialmente caso.', error: error.message });
+  }
 }
 
-function deletarCaso(req, res) {
-  const removido = casosRepository.remove(req.params.id);
-  if (!removido) return res.status(404).json({ message: 'Caso não encontrado' });
-  res.status(204).send();
+async function deletarCaso(req, res) {
+  try {
+    const { id } = req.params;
+    const deletado = await remove(id);
+    if (!deletado) return res.status(404).json({ mensagem: 'Caso não encontrado.' });
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao deletar caso.', error: error.message });
+  }
 }
 
-function buscarAgenteDoCaso(req, res) {
-  const caso = casosRepository.findById(req.params.caso_id);
-  if (!caso) return res.status(404).json({ message: 'Caso não encontrado' });
+async function buscarAgenteDoCaso(req, res) {
+  const { caso_id } = req.params;
 
-  const agente = agentesRepository.findById(caso.agente_id);
-  if (!agente) return res.status(404).json({ message: 'Agente não encontrado' });
+  try {
+    const agente = await db('agentes')
+      .join('casos', 'agentes.id', '=', 'casos.agente_id')
+      .select('agentes.*')
+      .where('casos.id', caso_id)
+      .first();
 
-  res.status(200).json(agente);
+    if (!agente) {
+      return res.status(404).json({ mensagem: 'Agente não encontrado para esse caso.' });
+    }
+
+    res.status(200).json(agente);
+  } catch (error) {
+    res.status(500).json({ mensagem: 'Erro ao buscar agente do caso.', error: error.message });
+  }
 }
 
 module.exports = {
@@ -71,5 +103,5 @@ module.exports = {
   atualizarCaso,
   atualizarParcialCaso,
   deletarCaso,
-  buscarAgenteDoCaso
+  buscarAgenteDoCaso,
 };

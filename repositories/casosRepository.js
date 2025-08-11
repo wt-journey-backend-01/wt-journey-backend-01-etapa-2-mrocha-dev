@@ -1,29 +1,38 @@
-let casos = [];
+const db = require('../db/db');
 
-function findAll() {
-  return casos;
+async function findAll() {
+  return db('casos').select('*');
 }
 
-function findById(id) {
-  return casos.find(c => c.id === id);
+async function findById(id) {
+  return db('casos').where({ id }).first();
 }
 
-function create(caso) {
-  casos.push(caso);
+async function create(data) {
+  const [novoCaso] = await db('casos').insert(data).returning('*');
+  return novoCaso;
 }
 
-function update(id, dados) {
-  const index = casos.findIndex(c => c.id === id);
-  if (index === -1) return null;
-  casos[index] = { ...casos[index], ...dados };
-  return casos[index];
+async function update(id, data) {
+  const [updated] = await db('casos').where({ id }).update(data).returning('*');
+  return updated || null;
 }
 
-function remove(id) {
-  const index = casos.findIndex(c => c.id === id);
-  if (index === -1) return false;
-  casos.splice(index, 1);
-  return true;
+async function patch(id, data) {
+  const [updated] = await db('casos').where({ id }).update(data).returning('*');
+  return updated || null;
 }
 
-module.exports = { findAll, findById, create, update, remove };
+async function remove(id) {
+  const deleted = await db('casos').where({ id }).del();
+  return deleted > 0;
+}
+
+module.exports = {
+  findAll,
+  findById,
+  create,
+  update,
+  patch,
+  remove,
+};

@@ -1,48 +1,43 @@
-const { v4: uuidv4 } = require('uuid');
+const db = require('../db/db');
 
-const agentes = [
-  {
-    id: uuidv4(),
-    nome: "Rommel Carneiro",
-    dataDeIncorporacao: "1992-10-04",
-    cargo: "delegado"
-  },
-  // outros agentes de exemplo
-];
-
-function findAll() {
-  return agentes;
+async function findAll() {
+  return db('agentes').select('*');
 }
 
-function findById(id) {
-  return agentes.find(agente => agente.id === id);
+async function findById(id) {
+  return db('agentes').where({ id }).first();
 }
 
-function create(data) {
-  const novoAgente = { id: uuidv4(), ...data };
-  agentes.push(novoAgente);
+async function create(data) {
+  const [novoAgente] = await db('agentes').insert(data).returning('*');
   return novoAgente;
 }
 
-function update(id, data) {
-  const index = agentes.findIndex(agente => agente.id === id);
-  if (index === -1) return null;
-  agentes[index] = { id, ...data };
-  return agentes[index];
+async function update(id, data) {
+  const [updated] = await db('agentes').where({ id }).update(data).returning('*');
+  return updated || null;
 }
 
-function patch(id, data) {
-  const agente = findById(id);
-  if (!agente) return null;
-  Object.assign(agente, data);
-  return agente;
+async function patch(id, data) {
+  const [updated] = await db('agentes').where({ id }).update(data).returning('*');
+  return updated || null;
 }
 
-function remove(id) {
-  const index = agentes.findIndex(agente => agente.id === id);
-  if (index === -1) return false;
-  agentes.splice(index, 1);
-  return true;
+async function remove(id) {
+  const deleted = await db('agentes').where({ id }).del();
+  return deleted > 0;
 }
 
-module.exports = { findAll, findById, create, update, patch, remove };
+async function findCasosByAgenteId(agente_id) {
+  return db('casos').where({ agente_id });
+}
+
+module.exports = {
+  findAll,
+  findById,
+  create,
+  update,
+  patch,
+  remove,
+  findCasosByAgenteId,
+};
